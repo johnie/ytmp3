@@ -30,7 +30,6 @@ All this installation script does is download the `ytmp3` script, make it an exe
 
   Options:
     -V, --version    Output version
-    -L, --list       Output the packages
     -h, --help       This message.
     --
 ```
