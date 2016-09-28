@@ -26,7 +26,9 @@ All this installation script does is download the `ytmp3` script, make it an exe
 ## Usage
 
 ```console
-  Usage: ytmp3 [options]
+  Usage:
+    ytmp3 https://www.youtube.com/watch?v=d9TpRfDdyU0
+    ytmp3 [options]
 
   Options:
     -V, --version    Output version
