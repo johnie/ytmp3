@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+version="1.0.0"
+
+# Packages to install
+packages=(
+    "youtube-dl"
+    "ffmpeg"
+)
+
+# usage info
+usage() {
+cat <<EOF
+
+    Usage:
+        ytmp3 https://www.youtube.com/watch?v=d9TpRfDdyU0 
+        ytmp3 [options]
+
+    Options:
+        -V, --version    Output version
+        -h, --help       This message
+        --               End of options
+
+EOF
+}
+
+
+# parse options
+while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do
+    case $1 in
+        -V | --version )
+            echo $version
+            exit
+            ;;
+        -h | --help )
+            usage
+            exit
+            ;;
+    esac
+    shift
+done
+if [[ "$1" == "--" ]]; then shift; fi
+
+address=$1
+if [[ $address ]]; then
+  printf "\n\e[33m[~] Starting...\e[0m\n"
+else
+  read -r -p "Enter YouTube address: " address
+fi
+
+# Main function
+ytmp3() {
+
+    # First, check if you already have youtube-dl and ffmpeg installed
+    # if not, install it
+
+    for pkg in "${packages[@]}"; do
+        if brew list -1 | grep -q "^${pkg}\$"; then
+            printf "\e[92m[✔] \e[32mPackage \e[39m'$pkg' \e[32mis already installed!\n"
+        else
+            brew install $(IFS=" "; echo "${pkg[@]}")
+        fi
+    done
+
+    return_code=$?
+    regex='v=(.*)'
+    if [[ $return_code -eq 0 ]]; then
+      if [[ $address =~ $regex ]]; then
+        video_id=${BASH_REMATCH[1]}
+        video_id=$(echo $video_id | cut -d'&' -f1)
+        video_title="$(youtube-dl --get-title $address)"
+        video_temp_name="$(youtube-dl --get-filename $address)"
+        file_name=${video_title// /_}
+
+        #download the video
+        youtube-dl $address
+
+        the_video="$(find . -name "*$video_title*")"
+
+        # convert the video to mp3
+        if [ "$(uname -s)" = "Darwin" ]; then
+          ffmpeg -i "$the_video" "$file_name".mp3
+          rm "$the_video"
+        elif [ "$(uname -s)" != "Darwin" ]; then
+          ffmpeg -i "$the_video" "$file_name".mp4
+          lame "$file_name".mp4 "$file_name".mp3
+          rm "$file_name" "$file_name".mp4
+        fi
+
+        printf "\e[92m[✔] \e[32mYour MP3 file is ready!\n"
+
+      else
+        printf "\e[31m[×] \e[31mSorry but the system encountered a problem. Please check your YouTube address and try again later\n"
+      fi
+    fi
+}
+
+ytmp3
